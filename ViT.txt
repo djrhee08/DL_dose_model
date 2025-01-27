@@ -1,0 +1,13 @@
+https://sh-tsang.medium.com/review-unetr-transformers-for-3d-medical-image-segmentation-913f497dc90c
+
+Things to test
+CNN
+- UNet
+- C3D
+
+ViT
+- UNETR
+- Swin UNETR
+
+GAN
+- CycleGAN
