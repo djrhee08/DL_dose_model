@@ -211,7 +211,8 @@ def main():
         # Training
         model.train()
         epoch_loss = 0
-        for batch in train_loader:
+        for idx, batch in enumerate(train_loader):
+            print("epoch, batch : ", epoch, ", ", idx)
             inputs = batch['image'].to(device, non_blocking=True)
             labels = batch['label'].to(device, non_blocking=True)
             
