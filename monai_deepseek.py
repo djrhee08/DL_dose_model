@@ -1,26 +1,59 @@
 import os
 import glob
+import argparse
 import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
 from scipy.io import loadmat
-from monai.networks.nets import UNETR, SwinUNETR
-from monai.transforms import Compose, ToTensord, SpatialPad, Resize
+from monai.networks.nets import UNETR, SwinUNETR, AttentionUnet, BasicUNet
+from monai.transforms import Compose, ToTensord
+from torch.utils.tensorboard import SummaryWriter
 import matplotlib.pyplot as plt
 
+
+parser = argparse.ArgumentParaser(description='Train a unetr/swin_unetr model')
+parser.add_argument('--model', type=str, default='unetr', 
+                    help='Model name, options: unet, attention_unet, unetr, swin_unetr (default: unetr)')
+parser.add_argument('--data_dir', type=str, default='./data/',
+                    help='Data directory path (default: /data/)')
+parser.add_argument('--batch_size', type=int, default=1,
+                    help='batch size for training (default: 1)')
+parser.add_argument('--learning_rate', type=float, default=1e-4,
+                    help='learning rate (default: 1e-4)')
+parser.add_argument('--epochs', type=int, default=10,
+                    help='Number of training epochs (default: 10)')
+parser.add_argument('--num_workers', type=int, default=4,
+                    help='Number of cpus for preprocessing (default: 4)')
+parser.add_argument('--is_log', type=bool, default=False,
+                    help='whether to log the information in tensorboard (default: False)')
+args = parser.parse_args()
+
 # Configuration
+data_dir = {args.data_dir}
 DATA_DIRS = {
-    'train': './data/train',
-    'val': './data/validation',
-    'test': './data/test'
+    'train': os.path.join(data_dir, 'train'),
+    'val': os.path.join(data_dir, 'validation'),
+    'test': os.path.join(data_dir, 'test')
 }
-BATCH_SIZE = 1
-NUM_EPOCHS = 100
-LEARNING_RATE = 1e-4
-NUM_WORKERS = 4
+BATCH_SIZE = {args.batch_size}
+NUM_EPOCHS = {args.epochs}
+LEARNING_RATE = {args.learning_rate}
+MODEL_NAME = {args.model}
+NUM_WORKERS = {args.num_workers}
+IS_LOG = {args.is_log}
 VAL_INTERVAL = 2
 IMG_SIZE = (128, 128, 128) #(192, 192, 192)
-MODEL_NAME = 'unetr'  # Choose 'unetr' or 'swin_unetr'
+
+print("Configuration:")
+print(f"Model: {args.model}")
+print(f"Learning Rate: {args.learning_rate}")
+print(f"Epochs: {args.epochs}")
+print(f"Batch Size: {args.batch_size}")
+print(f"Number of CPU workers: {args.num_workers}")
+
+# tensorboard logs
+if IS_LOG:
+    writer = SummaryWriter(log_dir='tensorboard_logs/')
 
 # Custom Dataset Class
 class MatDataset(Dataset):
@@ -125,6 +158,20 @@ def main():
             dropout_rate=0.0,
             spatial_dims=3
         ).to(device)
+    elif MODEL_NAME == 'attention_unet':
+        model = AttentionUnet(
+            spatial_dims=3,
+            in_channels=3,
+            out_channels=1,
+            channels=(64, 128, 256, 512, 1024),
+            strides=(2, 2, 2, 2)
+        ).to(device)
+    elif MODEL_NAME == 'unet':
+        model = BasicUNet(
+            spatial_dims=3,
+            in_channels=3,
+            out_channels=1
+        ).to(device)
     else:
         raise ValueError(f"Unknown model name: {MODEL_NAME}")
 
@@ -159,6 +206,9 @@ def main():
         train_loss_values.append(epoch_loss)
         print(f"Train loss: {epoch_loss:.4f}")
         
+        if IS_LOG:
+            writer.add_scalars('Loss/Train', {'Loss':epoch_loss}, epoch)
+        
         # Validation
         if (epoch + 1) % VAL_INTERVAL == 0:
             model.eval()
@@ -175,6 +225,8 @@ def main():
             val_loss_values.append(val_loss)
             
             print(f"Validation Loss: {val_loss:.4f}")
+            if IS_LOG:
+                writer.add_scalars('Loss/Validation', {'Loss':val_loss}, epoch)
             
             # Save best model
             if val_loss < best_val_loss:
@@ -197,6 +249,8 @@ def main():
 
     test_loss /= len(test_loader)
     print(f"Test Loss: {test_loss:.4f}")
+    if IS_LOG:
+        writer.add_scalars('Loss/Test', {'Loss':test_loss}, epoch)
     """
 
     # Plot training curves
@@ -207,7 +261,10 @@ def main():
     plt.xlabel("Epochs")
     plt.ylabel("Loss")
     plt.legend()
-    plt.show()
+    plt.savefig('training_validation_loss.png', format='png', dpi=200, bbox_inches='tight')
+
+    if IS_LOG:
+        writer.close()
 
 
 if __name__ == '__main__':
