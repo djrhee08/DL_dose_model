@@ -3,3 +3,4 @@ data/*
 *.npy
 *.pth
 *.h5
+tensorboard_logs/*
