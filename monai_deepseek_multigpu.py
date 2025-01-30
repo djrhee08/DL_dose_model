@@ -51,7 +51,7 @@ MODEL_NAME = args.model
 NUM_WORKERS = args.num_workers
 IS_LOG = args.is_log
 VAL_INTERVAL = 2
-IMG_SIZE = (128, 128, 128) #(192, 192, 192)
+IMG_SIZE = (192, 192, 192)
 
 """
 print("Configuration:")
@@ -252,10 +252,11 @@ def main():
             # Save best model (handling DataParallel)
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
+                bestmodelname = MODEL_NAME + '_best_model.pth'
                 if isinstance(model, torch.nn.DataParallel):
-                    torch.save(model.module.state_dict(), 'best_model.pth')
+                    torch.save(model.module.state_dict(), bestmodelname)
                 else:
-                    torch.save(model.state_dict(), 'best_model.pth')
+                    torch.save(model.state_dict(), bestmodelname)
                 print("Saved new best model")
 
     # Plot training curves (remain the same)
