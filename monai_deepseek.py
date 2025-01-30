@@ -237,9 +237,10 @@ def main():
             
             # Save best model
             if val_loss < best_val_loss:
+                bestmodelname = MODEL_NAME + '_best_model.pth'
                 best_val_loss = val_loss
-                torch.save(model.state_dict(), 'best_model.pth')
-                print("Saved new best model")
+                torch.save(model.state_dict(), bestmodelname)
+                print("Saved new best model for ", bestmodelname)
 
     # Testing
     """

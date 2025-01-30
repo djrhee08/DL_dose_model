@@ -258,7 +258,7 @@ def main():
                     torch.save(model.module.state_dict(), bestmodelname)
                 else:
                     torch.save(model.state_dict(), bestmodelname)
-                print("Saved new best model")
+                print("Saved new best model for ", bestmodelname)
 
     # Plot training curves (remain the same)
     plt.figure(figsize=(12, 6))
