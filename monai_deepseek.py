@@ -14,6 +14,8 @@ import matplotlib.pyplot as plt
 parser = argparse.ArgumentParaser(description='Train a unetr/swin_unetr model')
 parser.add_argument('--model', type=str, default='unetr', 
                     help='Model name, options: unet, attention_unet, unetr, swin_unetr (default: unetr)')
+parser.add_argument('--loss', type=str, default='mse', 
+                    help='Loss function, options: mse, mae, (default: mse)')
 parser.add_argument('--data_dir', type=str, default='./data/',
                     help='Data directory path (default: /data/)')
 parser.add_argument('--batch_size', type=int, default=1,
@@ -35,6 +37,7 @@ DATA_DIRS = {
     'val': os.path.join(data_dir, 'validation'),
     'test': os.path.join(data_dir, 'test')
 }
+LOSS_FUNCTION = {args.loss}
 BATCH_SIZE = {args.batch_size}
 NUM_EPOCHS = {args.epochs}
 LEARNING_RATE = {args.learning_rate}
@@ -176,7 +179,10 @@ def main():
         raise ValueError(f"Unknown model name: {MODEL_NAME}")
 
     # Loss function and optimizer
-    loss_function = torch.nn.MSELoss()  # For MAE: torch.nn.L1Loss()
+    if LOSS_FUNCTION == "mse":
+        loss_function = torch.nn.MSELoss() # Mean Squared Error
+    elif LOSS_FUNCTION == "mae":
+        loss_function = torch.nn.L1Loss() # Mean Absolute Error
     optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
     # Training loop
