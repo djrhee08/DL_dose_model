@@ -99,7 +99,7 @@ def create_file_groups(data_dir):
         
         jaw_path = os.path.join(data_dir, f'jaw_{identifier}')
         mlc_path = os.path.join(data_dir, f'mlc_{identifier}')
-        dose_path = os.path.join(data_dir, f'Dose_{identifier}')
+        dose_path = os.path.join(data_dir, f'dose_{identifier}')
         
         if all(os.path.exists(p) for p in [jaw_path, mlc_path, dose_path]):
             file_groups.append((ct_path, jaw_path, mlc_path, dose_path))
