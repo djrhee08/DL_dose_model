@@ -11,7 +11,7 @@ from torch.utils.tensorboard import SummaryWriter
 import matplotlib.pyplot as plt
 
 
-parser = argparse.ArgumentParaser(description='Train a unetr/swin_unetr model')
+parser = argparse.ArgumentParser(description='Train a unetr/swin_unetr model')
 parser.add_argument('--model', type=str, default='unetr', 
                     help='Model name, options: unet, attention_unet, unetr, swin_unetr (default: unetr)')
 parser.add_argument('--loss', type=str, default='mse', 
