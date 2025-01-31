@@ -31,7 +31,7 @@ def decoder_block_3d(x, skip_features, n_filters, kernel_size=(2,2,2), strides=(
 # 1) Coarse 3D U-Net that returns final segmentation + final decoder feature
 ###############################################################################
 def create_coarse_3d_unet(
-    input_shape=(128, 128, 128, 3),
+    input_shape=(192, 192, 192, 3),
     n_filters_base=16, 
     n_classes=1, 
     final_activation='sigmoid'
@@ -66,7 +66,7 @@ def create_coarse_3d_unet(
 
 
 def create_fine_3d_unet(
-    input_shape=(128, 128, 128, 3+16),
+    input_shape=(192, 192, 192, 3+16),
     n_filters_base=32, 
     n_classes=1, 
     final_activation='sigmoid'
@@ -75,7 +75,7 @@ def create_fine_3d_unet(
     Fine 3D U-Net for refined segmentation on ROI or bounding box,
     or on a multi-channel input (original ROI + coarse features).
     """
-    inputs = Input(input_shape)  # could be (N, 128, 128, 128, C)
+    inputs = Input(input_shape)  # could be (N, 192, 192, 192, C)
     
     # Encoder
     f1, p1 = encoder_block_3d(inputs, n_filters_base)
@@ -105,12 +105,12 @@ def create_cascade_3d_unet():
     In real practice, you'd do offline or custom-layers for ROI extraction & resizing.
     """
     # 1) Instantiate models
-    coarse_model = create_coarse_3d_unet(input_shape=(128, 128, 128, 3))  # returns [coarse_seg, d1]
-    fine_model   = create_fine_3d_unet(input_shape=(128, 128, 128, 3 + 16)) 
+    coarse_model = create_coarse_3d_unet(input_shape=(192, 192, 192, 3))  # returns [coarse_seg, d1]
+    fine_model   = create_fine_3d_unet(input_shape=(192, 192, 192, 3 + 16)) 
     
     # 2) Inputs
-    coarse_inputs = Input((128, 128, 128, 3), name='coarse_inputs')
-    highres_inputs = Input((128, 128, 128, 3), name='highres_inputs')
+    coarse_inputs = Input((192, 192, 192, 3), name='coarse_inputs')
+    highres_inputs = Input((192, 192, 192, 3), name='highres_inputs')
     
     # 3) Forward pass in coarse model
     coarse_seg, coarse_features = coarse_model(coarse_inputs)
@@ -121,9 +121,9 @@ def create_cascade_3d_unet():
     #
     # For demonstration, let's pretend highres_inputs is the ROI and that coarse_features
     # was magically resized. We'll call a dummy "Upsampling3D" on coarse_features just
-    # as a placeholder, to get it to 128^3:
+    # as a placeholder, to get it to 192^3:
     
-    # shape might become (None, 128, 128, 128, 3 + 16) if the factor is correct for your data
+    # shape might become (None, 192, 192, 192, 3 + 16) if the factor is correct for your data
     fine_inputs = layers.Concatenate(axis=-1)([highres_inputs, coarse_features])
     
     # 5) Fine segmentation
@@ -149,8 +149,8 @@ if __name__ == "__main__":
     
     # Dummy data
     import numpy as np
-    x_coarse = np.random.rand(1, 128, 128, 128, 3).astype(np.float32)
-    x_fine   = np.random.rand(1, 128, 128, 128, 3).astype(np.float32)
+    x_coarse = np.random.rand(1, 192, 192, 192, 3).astype(np.float32)
+    x_fine   = np.random.rand(1, 192, 192, 192, 3).astype(np.float32)
     
     # Forward pass
     out_coarse_seg, out_fine_seg = cascade_net.predict([x_coarse, x_fine])
