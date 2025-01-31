@@ -76,6 +76,7 @@ class MatDataset(Dataset):
         return len(self.file_groups)
     
     def __getitem__(self, index):
+        dose_factor = 100 # NEED TO CHECK THIS! Since dose values are too low, multiply 100 to it.
         ct_path, jaw_path, mlc_path, dose_path = self.file_groups[index]
         
         ct = loadmat(ct_path)['array'].astype(np.float32)
@@ -83,7 +84,7 @@ class MatDataset(Dataset):
         mlc = loadmat(mlc_path)['array'].astype(np.float32)
         
         image = np.stack([ct, jaw, mlc], axis=0)
-        label = loadmat(dose_path)['array'].astype(np.float32)[np.newaxis, ...]
+        label = loadmat(dose_path)['array'].astype(np.float32)[np.newaxis, ...] * dose_factor
         
         sample = {'image': image, 'label': label}
         
@@ -212,7 +213,8 @@ def main():
         model.train()
         epoch_loss = 0
         for idx, batch in enumerate(train_loader):
-            print("epoch, batch : ", epoch, ", ", idx)
+            if idx % 10 == 0:
+                print("epoch, batch : ", epoch, ", ", idx)
             inputs = batch['image'].to(device, non_blocking=True)
             labels = batch['label'].to(device, non_blocking=True)
             
@@ -226,7 +228,7 @@ def main():
         
         epoch_loss /= len(train_loader)
         train_loss_values.append(epoch_loss)
-        print(f"Train loss: {epoch_loss:.4f}")
+        print(f"Train loss: {epoch_loss:.7f}")
         
         if IS_LOG:
             writer.add_scalars('Loss/Train', {'Loss':epoch_loss}, epoch)
@@ -246,14 +248,14 @@ def main():
             val_loss /= len(val_loader)
             val_loss_values.append(val_loss)
             
-            print(f"Validation Loss: {val_loss:.4f}")
+            print(f"Validation Loss: {val_loss:.7f}")
             if IS_LOG:
                 writer.add_scalars('Loss/Validation', {'Loss':val_loss}, epoch)
             
             # Save best model (handling DataParallel)
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
-                bestmodelname = MODEL_NAME + '_best_model.pth'
+                bestmodelname = MODEL_NAME + '_' + LOSS_FUNCTION + '_best_model.pth'
                 if isinstance(model, torch.nn.DataParallel):
                     torch.save(model.module.state_dict(), bestmodelname)
                 else:
@@ -268,7 +270,7 @@ def main():
     plt.xlabel("Epochs")
     plt.ylabel("Loss")
     plt.legend()
-    plt.savefig('training_validation_loss.png', format='png', dpi=200, bbox_inches='tight')
+    plt.savefig(MODEL_NAME + '_' + LOSS_FUNCTION + '_loss.png', format='png', dpi=200, bbox_inches='tight')
 
     if IS_LOG:
         writer.close()
