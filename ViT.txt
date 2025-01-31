@@ -3,6 +3,7 @@ https://sh-tsang.medium.com/review-unetr-transformers-for-3d-medical-image-segme
 Things to test
 CNN
 - UNet
+- AttentionUNet
 - C3D
 
 ViT
